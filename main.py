@@ -1,5 +1,7 @@
 import Tkinter as tk
 import tkFileDialog as tkf
+from PIL import Image, ImageTk
+import os
 
 source = ''
 dest = ''
@@ -113,24 +115,78 @@ class MainScreen(tk.Frame):
 
         self.master = master
 
-
+        self.counter = 0
         self.sidebar = tk.Frame(self, bg='#bbeaff')
         self.sidebar.pack(fill=tk.BOTH, side=tk.LEFT)
         self.new_entry = ButtonBL(self.sidebar, bg="#bbeaff", w=330, h=70, r=20, color="#00afff",
                                   hover_color="#5ab7e2",
                                   press_color="#97d8f6",
-                                  text="New Entry")
+                                  text="Skip", command=self.next_image)
+        self.progress = tk.Label(self.sidebar, text='a', bg="#bbeaff",
+                                          font="TkDefaultFont 20")
+        self.img = None
+        self.canvas = tk.Canvas(self, width=100, height=100)
 
+        self.canvas.bind('<Button-1>', self.press)
+        self.canvas.bind('<ButtonRelease-1>', self.release)
+        self.canvas.bind('<B1-Motion>',self.pressed)
 
+        self.press_point = (0, 0)
+        self.release_point = (0, 0)
+        self.motion_point = (0, 0)
 
+        self.rec = None
 
+        self.filenames = []
 
+        self.name = 'pic'
+        self.size = 0
 
     def pack(self, **kwargs):
         tk.Frame.pack(self, **kwargs)
+        self.filenames = os.listdir(source)
+        self.size = len(self.filenames)
+        self.progress.config(text='{}/{}'.format(self.counter + 1, self.size))
+        self.img = Image.open(source+'\\'+self.filenames[self.counter])
+        w, h = self.img.size
+
+        self.canvas.config(width=w,height=h)
+        self.canvas.handle = ImageTk.PhotoImage(self.img)
+        self.canvas.create_image(w / 2, h / 2, image=self.canvas.handle)
+
         self.new_entry.pack(pady=(60, 5), padx=7)
-        print source
-        print dest
+        self.progress.pack()
+        self.canvas.pack()
+
+
+
+    def press(self, e):
+        # print '({},{})'.format(e.x,e.y)
+        self.press_point = e.x, e.y
+
+    def release(self, e):
+        # print '({},{})'.format(e.x, e.y)
+        self.release_point = e.x, e.y
+        # self.canvas.create_rectangle(self.press, self.release, outline='#00FF00')
+        self.img.crop((self.press_point[0],self.press_point[1],self.release_point[0],
+                       self.release_point[1])).save(dest + '\\{}{}.jpg'.format(self.name, self.counter))
+
+        self.next_image('a')
+
+    def pressed(self, e):
+        self.motion_point = e.x, e.y
+        if self.rec: self.canvas.delete(self.rec)
+        self.rec = self.canvas.create_rectangle(self.press_point, self.motion_point, outline='#00FF00')
+
+    def next_image(self, _):
+        self.counter += 1
+        self.progress.config(text='{}/{}'.format(self.counter+1,self.size))
+        self.img = Image.open(source+'\\'+self.filenames[self.counter])
+        w, h = self.img.size
+
+        self.canvas.config(width=w,height=h)
+        self.canvas.handle = ImageTk.PhotoImage(self.img)
+        self.canvas.create_image(w / 2, h / 2, image=self.canvas.handle)
 
 
 class ButtonBL(tk.Canvas):
