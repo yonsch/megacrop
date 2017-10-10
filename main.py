@@ -173,20 +173,27 @@ class MainScreen(tk.Frame):
 
         self.next_image('a')
 
+
     def pressed(self, e):
         self.motion_point = e.x, e.y
         if self.rec: self.canvas.delete(self.rec)
         self.rec = self.canvas.create_rectangle(self.press_point, self.motion_point, outline='#00FF00')
 
     def next_image(self, _):
-        self.counter += 1
-        self.progress.config(text='{}/{}'.format(self.counter+1,self.size))
-        self.img = Image.open(source+'\\'+self.filenames[self.counter])
-        w, h = self.img.size
 
-        self.canvas.config(width=w,height=h)
-        self.canvas.handle = ImageTk.PhotoImage(self.img)
-        self.canvas.create_image(w / 2, h / 2, image=self.canvas.handle)
+        if self.counter<self.size-1:
+            self.counter += 1
+            self.progress.config(text='{}/{}'.format(self.counter + 1, self.size))
+            self.img = Image.open(source + '\\' + self.filenames[self.counter])
+            w, h = self.img.size
+
+            self.canvas.config(width=w, height=h)
+            self.canvas.handle = ImageTk.PhotoImage(self.img)
+            self.canvas.create_image(w / 2, h / 2, image=self.canvas.handle)
+        else:
+            self.progress.config(text='That\'s it!')
+
+
 
 
 class ButtonBL(tk.Canvas):
